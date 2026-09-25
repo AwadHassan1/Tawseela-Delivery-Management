@@ -95,11 +95,29 @@ BEGIN
 END");
         if (!await db.Users.AnyAsync())
         {
-            db.Users.Add(new User { UserName = "admin", DisplayName = "مدير النظام", PasswordHash = passwordService.Hash("Admin@12345"), Role = UserRole.Admin, MustChangePassword = true });
+            var initialAdminPassword =
+                Environment.GetEnvironmentVariable("TAWSEELA_INITIAL_ADMIN_PASSWORD");
+
+            if (string.IsNullOrWhiteSpace(initialAdminPassword))
+            {
+                throw new InvalidOperationException(
+                    "TAWSEELA_INITIAL_ADMIN_PASSWORD environment variable is required to create the initial admin account.");
+            }
+
+            db.Users.Add(new User
+            {
+                UserName = "admin",
+                DisplayName = "مدير النظام",
+                PasswordHash = passwordService.Hash(initialAdminPassword),
+                Role = UserRole.Admin,
+                MustChangePassword = true
+            });
+
             db.Settings.AddRange(
                 new AppSetting { Key = "CompanyName", Value = "توصيله" },
                 new AppSetting { Key = "Currency", Value = "جنيه" },
                 new AppSetting { Key = "DateFormat", Value = "yyyy-MM-dd" });
+
             await db.SaveChangesAsync();
         }
     }
