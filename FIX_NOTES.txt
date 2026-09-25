@@ -1,0 +1,4 @@
+Tawseela final cleanup
+- Fixed global ComboBox selected-value rendering so object names (e.g. DeliveryMan.Name / Choice.Name) are shown instead of CLR type names.
+- Preserved DisplayMemberPath for dropdown items.
+- Kept existing architecture and database behavior.

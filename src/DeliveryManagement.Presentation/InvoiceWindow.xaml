@@ -1,0 +1,31 @@
+<Window x:Class="DeliveryManagement.Presentation.InvoiceWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="فاتورة توصيله" Width="760" Height="900" WindowStartupLocation="CenterOwner" FlowDirection="RightToLeft" Background="{StaticResource AppBackground}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Border x:Name="InvoicePaper" Background="White" Padding="42" CornerRadius="10" Margin="0,0,0,18">
+            <StackPanel>
+                <TextBlock Text="توصيله – Tawseela" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#111827"/>
+                <TextBlock Text="فاتورة توصيل" FontSize="18" HorizontalAlignment="Center" Margin="0,5,0,25" Foreground="#4B5563"/>
+                <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="رقم الفاتورة" FontWeight="SemiBold" Foreground="#6B7280"/><TextBlock Text="{Binding InvoiceNumber}" FontSize="16"/></StackPanel>
+                    <StackPanel Grid.Column="1"><TextBlock Text="رقم الأوردر" FontWeight="SemiBold" Foreground="#6B7280"/><TextBlock Text="{Binding OrderId}" FontSize="16"/></StackPanel>
+                    <StackPanel Grid.Column="2"><TextBlock Text="التاريخ والوقت" FontWeight="SemiBold" Foreground="#6B7280"/><TextBlock Text="{Binding Date,StringFormat=dd/MM/yyyy HH:mm}" FontSize="16"/></StackPanel>
+                </Grid>
+                <Border Background="#F3F4F6" CornerRadius="8" Padding="16" Margin="0,0,0,14"><StackPanel>
+                    <TextBlock Text="بيانات العميل" FontSize="17" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CustomerName}" Margin="0,8,0,0"/><TextBlock Text="{Binding CustomerPhone}"/><TextBlock Text="{Binding CustomerAddress}" TextWrapping="Wrap"/>
+                </StackPanel></Border>
+                <Border BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14"><StackPanel>
+                    <TextBlock Text="بيانات الطلب" FontSize="17" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <Grid Margin="0,5"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="نوع الأوردر"/><TextBlock Grid.Column="1" Text="{Binding OrderType,Converter={StaticResource OrderTypeConverter}}"/></Grid>
+                    <Grid Margin="0,5"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="قيمة الأوردر"/><TextBlock Grid.Column="1" Text="{Binding OrderValue,StringFormat={}{0:N2} ج.م}"/></Grid>
+                    <Grid Margin="0,5"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="رسوم التوصيل"/><TextBlock Grid.Column="1" Text="{Binding DeliveryFee,StringFormat={}{0:N2} ج.م}"/></Grid>
+                    <Separator Margin="0,8"/><Grid Margin="0,5"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="الإجمالي" FontWeight="Bold"/><TextBlock Grid.Column="1" Text="{Binding Total,StringFormat={}{0:N2} ج.م}" FontSize="20" FontWeight="Bold"/></Grid>
+                </StackPanel></Border>
+                <Grid Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="المندوب" FontWeight="SemiBold" Foreground="#6B7280"/><TextBlock Text="{Binding DeliveryManName}"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="حالة الطلب" FontWeight="SemiBold" Foreground="#6B7280"/><TextBlock Text="{Binding OrderStatus,Converter={StaticResource OrderStatusConverter}}"/></StackPanel></Grid>
+                <Border Background="#EFF6FF" CornerRadius="8" Padding="16"><StackPanel><TextBlock Text="إجمالي المبلغ" FontWeight="SemiBold"/><TextBlock Text="{Binding Total,StringFormat={}{0:N2} ج.م}" FontSize="24" FontWeight="Bold" Foreground="#1D4ED8"/><TextBlock Text="{Binding PaymentStatus, StringFormat=حالة الدفع/التحصيل: {0}}" Margin="0,6,0,0"/><TextBlock Text="{Binding Notes}" TextWrapping="Wrap" Margin="0,5,0,0"/></StackPanel></Border>
+                <TextBlock Text="شكرًا لتعاملكم مع توصيله" HorizontalAlignment="Center" Margin="0,28,0,0" Foreground="#6B7280"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left"><Button Content="طباعة" Click="Print_Click" Style="{StaticResource PrimaryButtonStyle}" Width="110"/><Button Content="إغلاق" Click="Close_Click" Style="{StaticResource SecondaryButtonStyle}" Width="100"/></StackPanel>
+    </Grid>
+</Window>

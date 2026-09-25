@@ -1,0 +1,452 @@
+<Window x:Class="DeliveryManagement.Presentation.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="توصيله | تسجيل الدخول"
+        Width="560"
+        Height="760"
+        MinWidth="560"
+        MinHeight="760"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        FlowDirection="RightToLeft"
+        Background="Transparent">
+
+    <Window.Resources>
+
+        <!-- ========================= -->
+        <!-- Brushes -->
+        <!-- ========================= -->
+
+        <SolidColorBrush x:Key="BackgroundBrush"
+                         Color="#0A1020"/>
+
+        <SolidColorBrush x:Key="CardBrush"
+                         Color="#121B2F"/>
+
+        <SolidColorBrush x:Key="InputBrush"
+                         Color="#0D1629"/>
+
+        <SolidColorBrush x:Key="BorderBrush"
+                         Color="#24324D"/>
+
+        <SolidColorBrush x:Key="PrimaryBrush"
+                         Color="#2563EB"/>
+
+        <SolidColorBrush x:Key="PrimaryHoverBrush"
+                         Color="#3478F6"/>
+
+        <SolidColorBrush x:Key="TextBrush"
+                         Color="#F8FAFC"/>
+
+        <SolidColorBrush x:Key="SecondaryTextBrush"
+                         Color="#94A3B8"/>
+
+
+        <!-- ========================= -->
+        <!-- TextBox Style -->
+        <!-- ========================= -->
+
+        <Style x:Key="ModernTextBoxStyle"
+               TargetType="TextBox">
+
+            <Setter Property="Height"
+                    Value="50"/>
+
+            <Setter Property="FontSize"
+                    Value="15"/>
+
+            <Setter Property="Foreground"
+                    Value="{StaticResource TextBrush}"/>
+
+            <Setter Property="Background"
+                    Value="{StaticResource InputBrush}"/>
+
+            <Setter Property="BorderBrush"
+                    Value="{StaticResource BorderBrush}"/>
+
+            <Setter Property="BorderThickness"
+                    Value="1"/>
+
+            <Setter Property="Padding"
+                    Value="16,0"/>
+
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Right"/>
+
+            <Setter Property="Margin"
+                    Value="0,7,0,0"/>
+
+        </Style>
+
+
+        <!-- ========================= -->
+        <!-- PasswordBox Style -->
+        <!-- ========================= -->
+
+        <Style x:Key="ModernPasswordBoxStyle"
+               TargetType="PasswordBox">
+
+            <Setter Property="Height"
+                    Value="50"/>
+
+            <Setter Property="FontSize"
+                    Value="15"/>
+
+            <Setter Property="Foreground"
+                    Value="{StaticResource TextBrush}"/>
+
+            <Setter Property="Background"
+                    Value="{StaticResource InputBrush}"/>
+
+            <Setter Property="BorderBrush"
+                    Value="{StaticResource BorderBrush}"/>
+
+            <Setter Property="BorderThickness"
+                    Value="1"/>
+
+            <Setter Property="Padding"
+                    Value="16,0"/>
+
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Right"/>
+
+            <Setter Property="Margin"
+                    Value="0,7,0,0"/>
+
+        </Style>
+
+
+        <!-- ========================= -->
+        <!-- Login Button -->
+        <!-- ========================= -->
+
+        <Style x:Key="LoginButtonStyle"
+               TargetType="Button">
+
+            <Setter Property="Height"
+                    Value="52"/>
+
+            <Setter Property="FontSize"
+                    Value="15"/>
+
+            <Setter Property="FontWeight"
+                    Value="SemiBold"/>
+
+            <Setter Property="Foreground"
+                    Value="White"/>
+
+            <Setter Property="Background"
+                    Value="{StaticResource PrimaryBrush}"/>
+
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+
+            <Setter Property="Cursor"
+                    Value="Hand"/>
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="Button">
+
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="10">
+
+                            <ContentPresenter
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+
+                        </Border>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+
+                    <Setter Property="Background"
+                            Value="{StaticResource PrimaryHoverBrush}"/>
+
+                </Trigger>
+
+                <Trigger Property="IsPressed"
+                         Value="True">
+
+                    <Setter Property="Opacity"
+                            Value="0.85"/>
+
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>
+
+    </Window.Resources>
+
+
+    <!-- ========================= -->
+    <!-- Main Container -->
+    <!-- ========================= -->
+
+    <Border Background="{StaticResource BackgroundBrush}"
+            CornerRadius="18"
+            BorderBrush="#1E2A43"
+            BorderThickness="1">
+
+        <Grid>
+
+            <Grid.RowDefinitions>
+
+                <RowDefinition Height="42"/>
+
+                <RowDefinition Height="*"/>
+
+            </Grid.RowDefinitions>
+
+
+            <!-- ========================= -->
+            <!-- Window Header -->
+            <!-- ========================= -->
+
+            <Border Grid.Row="0"
+                    Background="#0D1527"
+                    CornerRadius="18,18,0,0">
+
+                <Grid>
+
+                    <TextBlock Text="توصيله"
+                               Foreground="#64748B"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               Margin="18,0,0,0"/>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Left"
+                                Margin="12,0,0,0">
+
+                        <Button Width="30"
+                                Height="30"
+                                Content="×"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="#94A3B8"
+                                FontSize="20"
+                                Click="Close_Click"
+                                Cursor="Hand"/>
+
+                    </StackPanel>
+
+                </Grid>
+
+            </Border>
+
+
+            <!-- ========================= -->
+            <!-- Content -->
+            <!-- ========================= -->
+
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled">
+
+                <StackPanel Margin="52,30,52,34">
+
+
+                    <!-- ========================= -->
+                    <!-- Logo -->
+                    <!-- ========================= -->
+
+                    <Border Width="82"
+                            Height="82"
+                            CornerRadius="24"
+                            Background="{StaticResource PrimaryBrush}"
+                            HorizontalAlignment="Center">
+
+                        <Grid>
+
+                            <TextBlock Text="ت"
+                                       Foreground="White"
+                                       FontSize="48"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Margin="0,-4,0,0"/>
+
+                        </Grid>
+
+                    </Border>
+
+
+                    <!-- ========================= -->
+                    <!-- Brand -->
+                    <!-- ========================= -->
+
+                    <TextBlock Text="توصيله"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="40"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,15,0,2"/>
+
+                    <TextBlock Text="إدارة الشحن والتوصيل"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               FontSize="14"
+                               HorizontalAlignment="Center"/>
+
+
+                    <!-- ========================= -->
+                    <!-- Login Card -->
+                    <!-- ========================= -->
+
+                    <Border Background="{StaticResource CardBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="18"
+                            Padding="28"
+                            Margin="0,30,0,0">
+
+                        <StackPanel>
+
+
+                            <!-- Title -->
+
+                            <TextBlock Text="تسجيل الدخول"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="25"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBlock Text="أدخل بيانات حسابك للوصول إلى نظام توصيله"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="13"
+                                       Margin="0,6,0,25"/>
+
+
+                            <!-- ========================= -->
+                            <!-- Username -->
+                            <!-- ========================= -->
+
+                            <TextBlock Text="اسم المستخدم"
+                                       Foreground="#CBD5E1"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Margin="2,0,0,0"/>
+
+                            <Grid>
+
+                                <TextBox x:Name="UserName"
+                                         Style="{StaticResource ModernTextBoxStyle}"/>
+
+                            </Grid>
+
+
+                            <!-- ========================= -->
+                            <!-- Password -->
+                            <!-- ========================= -->
+
+                            <TextBlock Text="كلمة المرور"
+                                       Foreground="#CBD5E1"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Margin="2,19,0,0"/>
+
+                            <PasswordBox x:Name="Password"
+                                         Style="{StaticResource ModernPasswordBoxStyle}"/>
+
+
+                            <!-- ========================= -->
+                            <!-- Error -->
+                            <!-- ========================= -->
+
+                            <Border Background="#2A1720"
+                                    BorderBrush="#5A2633"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="10"
+                                    Margin="0,15,0,0">
+
+                                <TextBlock x:Name="ErrorText"
+                                           Foreground="#FCA5A5"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"
+                                           Visibility="Collapsed"/>
+
+                            </Border>
+
+
+                            <!-- ========================= -->
+                            <!-- Login -->
+                            <!-- ========================= -->
+
+                            <Button Content="دخول إلى النظام"
+                                    Style="{StaticResource LoginButtonStyle}"
+                                    Margin="0,20,0,0"
+                                    Click="Login_Click"/>
+
+
+                            <!-- ========================= -->
+                            <!-- Security -->
+                            <!-- ========================= -->
+
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,17,0,0">
+
+                                <TextBlock Text="●"
+                                           Foreground="#22C55E"
+                                           FontSize="11"
+                                           Margin="0,0,6,0"/>
+
+                                <TextBlock Text="نظام آمن لإدارة بيانات المكتب"
+                                           Foreground="#64748B"
+                                           FontSize="11"/>
+
+                            </StackPanel>
+
+                        </StackPanel>
+
+                    </Border>
+
+
+                    <!-- ========================= -->
+                    <!-- Footer -->
+                    <!-- ========================= -->
+
+                    <StackPanel Margin="0,24,0,0">
+
+                        <TextBlock Text="توصيله"
+                                   Foreground="#64748B"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"/>
+
+                        <TextBlock Text="إدارة الطلبات • التحصيل • التسويات"
+                                   Foreground="#475569"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,5,0,0"/>
+
+                    </StackPanel>
+
+
+                </StackPanel>
+
+            </ScrollViewer>
+
+        </Grid>
+
+    </Border>
+
+</Window>

@@ -1,0 +1,181 @@
+<Window x:Class="DeliveryManagement.Presentation.AddDriverWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إضافة مندوب"
+        Width="620"
+        Height="690"
+        WindowStartupLocation="CenterOwner"
+        FlowDirection="RightToLeft"
+        ResizeMode="NoResize"
+        Background="{StaticResource AppBackground}">
+
+    <Border Margin="18"
+            Background="{StaticResource Surface}"
+            CornerRadius="18"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            Padding="28">
+
+        <Grid>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- العنوان -->
+            <StackPanel Grid.Row="0">
+                <TextBlock Text="إضافة مندوب جديد"
+                           FontSize="28"
+                           FontWeight="SemiBold"/>
+
+                <TextBlock Text="أدخل بيانات المندوب ونظام العمولة"
+                           Foreground="{StaticResource TextSecondary}"
+                           Margin="0,6,0,24"/>
+            </StackPanel>
+
+            <!-- البيانات -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto">
+
+                <StackPanel>
+
+                    <!-- الاسم -->
+                    <TextBlock Text="اسم المندوب"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="4,0,0,5"/>
+
+                    <TextBox x:Name="NameBox"
+                             Height="44"/>
+
+                    <!-- الهاتف -->
+                    <TextBlock Text="رقم الهاتف"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="4,18,0,5"/>
+
+                    <TextBox x:Name="PhoneBox"
+                             Height="44"/>
+
+                    <!-- العنوان -->
+                    <TextBlock Text="العنوان"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="4,18,0,5"/>
+
+                    <TextBox x:Name="AddressBox"
+                             Height="44"/>
+
+                    <!-- التاريخ ونوع العمولة -->
+                    <Grid Margin="0,18,0,0">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- تاريخ البدء -->
+                        <StackPanel Grid.Column="0">
+
+                            <TextBlock Text="تاريخ البدء"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       Margin="4,0,0,5"/>
+
+                            <DatePicker x:Name="StartDatePicker"
+                                        Height="44"/>
+
+                        </StackPanel>
+
+                        <!-- نوع العمولة -->
+                        <StackPanel Grid.Column="2">
+
+                            <TextBlock Text="نوع العمولة"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       Margin="4,0,0,5"/>
+
+                            <ComboBox x:Name="CommissionTypeBox"
+                                      Height="44"
+                                      SelectedIndex="0">
+
+                                <ComboBoxItem Tag="None">
+                                    بدون عمولة
+                                </ComboBoxItem>
+
+                                <ComboBoxItem Tag="FixedPerOrder">
+                                    مبلغ ثابت لكل أوردر
+                                </ComboBoxItem>
+
+                                <ComboBoxItem Tag="PercentageOfDeliveryFee">
+                                    نسبة من رسوم التوصيل %
+                                </ComboBoxItem>
+
+                                <ComboBoxItem Tag="PercentageOfOrderValue">
+                                    نسبة من قيمة الأوردر %
+                                </ComboBoxItem>
+
+                            </ComboBox>
+
+                        </StackPanel>
+
+                    </Grid>
+
+                    <!-- قيمة العمولة -->
+                    <TextBlock Text="قيمة العمولة"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="4,18,0,5"/>
+
+                    <TextBox x:Name="CommissionValueBox"
+                             Height="44"
+                             Text="0"/>
+
+                    <!-- الملاحظات -->
+                    <TextBlock Text="ملاحظات"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="4,18,0,5"/>
+
+                    <TextBox x:Name="NotesBox"
+                             Height="75"
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Top"
+                             Padding="10"/>
+
+                    <!-- الحالة -->
+                    <CheckBox x:Name="ActiveBox"
+                              Content="المندوب نشط"
+                              IsChecked="True"
+                              Margin="4,18,0,0"/>
+
+                    <!-- رسالة الخطأ -->
+                    <TextBlock x:Name="ErrorText"
+                               Foreground="#FCA5A5"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed"
+                               Margin="0,14,0,0"/>
+
+                </StackPanel>
+
+            </ScrollViewer>
+
+            <!-- الأزرار -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        Margin="0,22,0,0">
+
+                <Button Content="حفظ المندوب"
+                        Click="Save_Click"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Width="140"/>
+
+                <Button Content="إلغاء"
+                        Click="Cancel_Click"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Width="100"/>
+
+            </StackPanel>
+
+        </Grid>
+
+    </Border>
+
+</Window>
