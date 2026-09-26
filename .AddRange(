@@ -1,0 +1,36 @@
+warning: in the working copy of 'src/DeliveryManagement.Persistence/AppDbContext.cs', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/DeliveryManagement.Persistence/AppDbContext.cs b/src/DeliveryManagement.Persistence/AppDbContext.cs[m
+[1mindex cc7c74a..e197e55 100644[m
+[1m--- a/src/DeliveryManagement.Persistence/AppDbContext.cs[m
+[1m+++ b/src/DeliveryManagement.Persistence/AppDbContext.cs[m
+[36m@@ -95,11 +95,29 @@[m [mBEGIN[m
+ END");[m
+         if (!await db.Users.AnyAsync())[m
+         {[m
+[31m-            db.Users.Add(new User { UserName = "admin", DisplayName = "مدير النظام", PasswordHash = passwordService.Hash("Admin@12345"), Role = UserRole.Admin, MustChangePassword = true });[m
+[32m+[m[32m            var initialAdminPassword =[m
+[32m+[m[32m                Environment.GetEnvironmentVariable("TAWSEELA_INITIAL_ADMIN_PASSWORD");[m
+[32m+[m
+[32m+[m[32m            if (string.IsNullOrWhiteSpace(initialAdminPassword))[m
+[32m+[m[32m            {[m
+[32m+[m[32m                throw new InvalidOperationException([m
+[32m+[m[32m                    "TAWSEELA_INITIAL_ADMIN_PASSWORD environment variable is required to create the initial admin account.");[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            db.Users.Add(new User[m
+[32m+[m[32m            {[m
+[32m+[m[32m                UserName = "admin",[m
+[32m+[m[32m                DisplayName = "مدير النظام",[m
+[32m+[m[32m                PasswordHash = passwordService.Hash(initialAdminPassword),[m
+[32m+[m[32m                Role = UserRole.Admin,[m
+[32m+[m[32m                MustChangePassword = true[m
+[32m+[m[32m            });[m
+[32m+[m
+             db.Settings.AddRange([m
+                 new AppSetting { Key = "CompanyName", Value = "توصيله" },[m
+                 new AppSetting { Key = "Currency", Value = "جنيه" },[m
+                 new AppSetting { Key = "DateFormat", Value = "yyyy-MM-dd" });[m
+[32m+[m
+             await db.SaveChangesAsync();[m
+         }[m
+     }[m

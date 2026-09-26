@@ -90,6 +90,11 @@ public sealed class SettlementService(IRepository<DeliveryMan> drivers, IReposit
     public async Task<Settlement> CreateAsync(int driverId, DateTime date, decimal paid, string notes, int userId, CancellationToken ct = default)
     {
         var calc = await PreviewAsync(driverId, date, paid, ct);
+        if (paid > calc.Due)
+        {
+            throw new InvalidOperationException(
+                $"المبلغ المدفوع لا يمكن أن يكون أكبر من المستحق للمكتب ({calc.Due:N2} جنيه).");
+        }
         if (paid < 0) throw new ArgumentException("المبلغ المدفوع لا يمكن أن يكون سالبًا.");
         var existing = await settlements.Query().AnyAsync(s => s.DeliveryManId == driverId && s.Date.Date == date.Date, ct);
         if (existing) throw new InvalidOperationException("توجد تسوية لهذا المندوب والتاريخ بالفعل.");

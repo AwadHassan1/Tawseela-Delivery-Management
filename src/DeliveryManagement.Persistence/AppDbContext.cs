@@ -27,12 +27,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         b.Entity<Order>().HasIndex(x => new { x.CreatedAt, x.Status, x.DeliveryManId });
         b.Entity<Invoice>().HasIndex(x => x.InvoiceNumber).IsUnique();
         b.Entity<Invoice>().HasIndex(x => x.OrderId).IsUnique();
-        b.Entity<Order>().Property(x => x.OrderValue).HasPrecision(18,2);
-        b.Entity<Order>().Property(x => x.DeliveryFee).HasPrecision(18,2);
-        b.Entity<Order>().Property(x => x.CollectedAmount).HasPrecision(18,2);
-        b.Entity<DeliveryMan>().Property(x => x.CommissionValue).HasPrecision(18,2);
-        b.Entity<Expense>().Property(x => x.Amount).HasPrecision(18,2);
-        foreach (var p in new[] { "OrdersValue", "DeliveryFees", "AmountCollected", "Commission", "ApprovedExpenses", "AmountDueToOffice", "AmountPaid", "Remaining" }) b.Entity<Settlement>().Property(p).HasPrecision(18,2);
+        b.Entity<Order>().Property(x => x.OrderValue).HasPrecision(18, 2);
+        b.Entity<Order>().Property(x => x.DeliveryFee).HasPrecision(18, 2);
+        b.Entity<Order>().Property(x => x.CollectedAmount).HasPrecision(18, 2);
+        b.Entity<DeliveryMan>().Property(x => x.CommissionValue).HasPrecision(18, 2);
+        b.Entity<Expense>().Property(x => x.Amount).HasPrecision(18, 2);
+        foreach (var p in new[] { "OrdersValue", "DeliveryFees", "AmountCollected", "Commission", "ApprovedExpenses", "AmountDueToOffice", "AmountPaid", "Remaining" }) b.Entity<Settlement>().Property(p).HasPrecision(18, 2);
         b.Entity<Settlement>().HasIndex(x => new { x.DeliveryManId, x.Date }).IsUnique();
         b.Entity<SettlementDetail>().HasIndex(x => new { x.SettlementId, x.OrderId }).IsUnique();
         b.Entity<AppSetting>().HasIndex(x => x.Key).IsUnique();
@@ -46,10 +46,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         b.Entity<Invoice>().Property(x => x.CustomerAddress).HasMaxLength(500);
         b.Entity<Invoice>().Property(x => x.DeliveryManName).HasMaxLength(200);
         b.Entity<Invoice>().Property(x => x.Notes).HasMaxLength(1000);
-        b.Entity<Invoice>().Property(x => x.OrderValue).HasPrecision(18,2);
-        b.Entity<Invoice>().Property(x => x.DeliveryFee).HasPrecision(18,2);
-        b.Entity<Invoice>().Property(x => x.Total).HasPrecision(18,2);
-        b.Entity<Invoice>().Property(x => x.CollectedAmount).HasPrecision(18,2);
+        b.Entity<Invoice>().Property(x => x.OrderValue).HasPrecision(18, 2);
+        b.Entity<Invoice>().Property(x => x.DeliveryFee).HasPrecision(18, 2);
+        b.Entity<Invoice>().Property(x => x.Total).HasPrecision(18, 2);
+        b.Entity<Invoice>().Property(x => x.CollectedAmount).HasPrecision(18, 2);
     }
 }
 
