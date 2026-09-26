@@ -1195,10 +1195,12 @@
                                     <DataTemplate>
 
                                         <Button Content="عرض"
-                                                Command="{Binding DataContext.OpenDriverDetailsCommand,RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                Height="32"/>
+        Command="{Binding DataContext.OpenDriverDetailsCommand,
+                          RelativeSource={RelativeSource FindAncestor,
+                          AncestorType={x:Type Window}}}"
+        CommandParameter="{Binding}"
+        Style="{StaticResource SecondaryButtonStyle}"
+        Height="32"/>
 
                                     </DataTemplate>
 
@@ -2036,6 +2038,481 @@
         </DataTemplate>
 
 
+        <!-- ========================= -->
+        <!-- Settlement History -->
+        <!-- ========================= -->
+
+        <DataTemplate DataType="{x:Type local:SettlementHistoryPageVm}">
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                <StackPanel Margin="34">
+
+                    <TextBlock Text="سجل التسويات المالية"
+                               FontSize="30"
+                               FontWeight="SemiBold"/>
+
+                    <TextBlock Text="مراجعة جميع التسويات السابقة ومتابعة المستحق والمدفوع والمتبقي"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="0,5,0,24"/>
+
+                    <!-- Filters -->
+
+                    <Border Background="{StaticResource Surface}"
+                            CornerRadius="14"
+                            Padding="20"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1">
+
+                        <Grid>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.1*"/>
+                                <ColumnDefinition Width="1.1*"/>
+                                <ColumnDefinition Width="1.3*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0"
+                                        Margin="0,0,10,0">
+
+                                <TextBlock Text="من تاريخ"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,0,0,6"/>
+
+                                <DatePicker SelectedDate="{Binding FromDate}"
+                                            Height="38"/>
+
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1"
+                                        Margin="10,0,10,0">
+
+                                <TextBlock Text="إلى تاريخ"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,0,0,6"/>
+
+                                <DatePicker SelectedDate="{Binding ToDate}"
+                                            Height="38"/>
+
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2"
+                                        Margin="10,0,10,0">
+
+                                <TextBlock Text="المندوب"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,0,0,6"/>
+
+                                <ComboBox ItemsSource="{Binding Drivers}"
+                                          SelectedItem="{Binding SelectedDriver}"
+                                          DisplayMemberPath="Name"
+                                          Height="38"/>
+
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="3"
+                                        Margin="10,0,10,0">
+
+                                <TextBlock Text="بحث باسم المندوب"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="0,0,0,6"/>
+
+                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="38"
+                                         Padding="10,7"/>
+
+                            </StackPanel>
+
+                            <Button Grid.Column="4"
+                                    Content="تحميل"
+                                    Command="{Binding LoadCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Padding="20,8"
+                                    Margin="10,24,5,0"/>
+
+                            <Button Grid.Column="5"
+                                    Content="إعادة تعيين"
+                                    Command="{Binding ResetCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Padding="20,8"
+                                    Margin="5,24,0,0"/>
+
+                        </Grid>
+
+                    </Border>
+
+                    <!-- Selected settlement actions -->
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="0,14,0,0">
+
+                        <Button Content="تصدير تفاصيل Excel"
+                                Command="{Binding ExportDetailsExcelCommand}"
+                                IsEnabled="{Binding HasSelectedSettlement}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="18,9"
+                                Margin="0,0,8,0"/>
+
+                        <Button Content="طباعة التفاصيل"
+                                Command="{Binding PrintDetailsCommand}"
+                                IsEnabled="{Binding HasSelectedSettlement}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="18,9"
+                                Margin="0,0,8,0"/>
+
+                        <Button Content="إغلاق التفاصيل"
+                                Command="{Binding CloseDetailsCommand}"
+                                IsEnabled="{Binding HasSelectedSettlement}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="18,9"/>
+
+                    </StackPanel>
+
+                    <!-- Totals -->
+
+                    <Grid Margin="0,18,0,18">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="{StaticResource Surface}"
+                                CornerRadius="12"
+                                Padding="16"
+                                Margin="0,0,6,0"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1">
+
+                            <StackPanel>
+                                <TextBlock Text="إجمالي قيمة الطلبات"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding TotalOrdersValue, StringFormat={}{0:N2} جنيه}"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Background="{StaticResource Surface}"
+                                CornerRadius="12"
+                                Padding="16"
+                                Margin="6,0"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1">
+
+                            <StackPanel>
+                                <TextBlock Text="إجمالي التحصيل"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding TotalCollected, StringFormat={}{0:N2} جنيه}"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Background="{StaticResource Surface}"
+                                CornerRadius="12"
+                                Padding="16"
+                                Margin="6,0"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1">
+
+                            <StackPanel>
+                                <TextBlock Text="إجمالي المستحق للمكتب"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding TotalDue, StringFormat={}{0:N2} جنيه}"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                        </Border>
+
+                        <Border Grid.Column="3"
+                                Background="{StaticResource Surface}"
+                                CornerRadius="12"
+                                Padding="16"
+                                Margin="6,0,0,0"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1">
+
+                            <StackPanel>
+                                <TextBlock Text="إجمالي المتبقي"
+                                           Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding TotalRemaining, StringFormat={}{0:N2} جنيه}"
+                                           FontSize="20"
+                                           FontWeight="SemiBold"
+                                           Margin="0,6,0,0"/>
+                            </StackPanel>
+
+                        </Border>
+
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding TotalDeliveryFees, StringFormat=إجمالي التوصيل: {0:N2} جنيه}"
+                                   Foreground="{StaticResource TextSecondary}"/>
+
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding TotalCommission, StringFormat=إجمالي العمولة: {0:N2} جنيه}"
+                                   Foreground="{StaticResource TextSecondary}"/>
+
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding TotalExpenses, StringFormat=المصروفات المعتمدة: {0:N2} جنيه}"
+                                   Foreground="{StaticResource TextSecondary}"/>
+
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding TotalPaid, StringFormat=إجمالي المدفوع: {0:N2} جنيه}"
+                                   Foreground="{StaticResource TextSecondary}"/>
+
+                    </Grid>
+
+                    <!-- Settlement Table -->
+
+                    <Border Background="{StaticResource Surface}"
+                            CornerRadius="14"
+                            Padding="18"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1">
+
+                        <DataGrid ItemsSource="{Binding Settlements}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserAddRows="False"
+                                  HeadersVisibility="Column"
+                                  MinHeight="350">
+
+                            <DataGrid.Columns>
+
+                                <DataGridTextColumn Header="رقم التسوية"
+                                                    Binding="{Binding Id}"
+                                                    Width="0.8*"/>
+
+                                <DataGridTextColumn Header="التاريخ"
+                                                    Binding="{Binding Date, StringFormat=dd/MM/yyyy}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="المندوب"
+                                                    Binding="{Binding DriverName}"
+                                                    Width="1.4*"/>
+
+                                <DataGridTextColumn Header="قيمة الطلبات"
+                                                    Binding="{Binding OrdersValue, StringFormat={}{0:N2}}"
+                                                    Width="1.1*"/>
+
+                                <DataGridTextColumn Header="التوصيل"
+                                                    Binding="{Binding DeliveryFees, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="التحصيل"
+                                                    Binding="{Binding AmountCollected, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="العمولة"
+                                                    Binding="{Binding Commission, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="المصروفات"
+                                                    Binding="{Binding ApprovedExpenses, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="المستحق للمكتب"
+                                                    Binding="{Binding AmountDueToOffice, StringFormat={}{0:N2}}"
+                                                    Width="1.2*"/>
+
+                                <DataGridTextColumn Header="المدفوع"
+                                                    Binding="{Binding AmountPaid, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTextColumn Header="المتبقي"
+                                                    Binding="{Binding Remaining, StringFormat={}{0:N2}}"
+                                                    Width="1*"/>
+
+                                <DataGridTemplateColumn Header="التفاصيل"
+                                                        Width="1.1*">
+
+                                    <DataGridTemplateColumn.CellTemplate>
+
+                                        <DataTemplate>
+
+                                            <Button Content="عرض"
+                                                    Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Padding="12,5"/>
+
+                                        </DataTemplate>
+
+                                    </DataGridTemplateColumn.CellTemplate>
+
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="الحالة"
+                                                        Width="0.9*">
+
+                                    <DataGridTemplateColumn.CellTemplate>
+
+                                        <DataTemplate>
+
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="مفتوحة"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsClosed}" Value="True">
+                                                                <Setter Property="Text" Value="مغلقة"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                        </DataTemplate>
+
+                                    </DataGridTemplateColumn.CellTemplate>
+
+                                </DataGridTemplateColumn>
+
+                            </DataGrid.Columns>
+
+                        </DataGrid>
+
+                    </Border>
+
+                    <!-- Selected settlement details -->
+
+                    <Border Background="{StaticResource Surface}"
+                            CornerRadius="14"
+                            Padding="18"
+                            Margin="0,18,0,0"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            Visibility="{Binding HasSelectedSettlement, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <StackPanel>
+
+                            <TextBlock Text="تفاصيل التسوية المحددة"
+                                       FontSize="21"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBlock Margin="0,5,0,15"
+                                       Foreground="{StaticResource TextSecondary}">
+                                <Run Text="رقم التسوية: "/>
+                                <Run Text="{Binding SelectedSettlement.Id}"/>
+                                <Run Text="   |   المندوب: "/>
+                                <Run Text="{Binding SelectedSettlement.DriverName}"/>
+                                <Run Text="   |   التاريخ: "/>
+                                <Run Text="{Binding SelectedSettlement.Date, StringFormat=dd/MM/yyyy}"/>
+                            </TextBlock>
+
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding SelectedSettlement.AmountDueToOffice, StringFormat=المستحق للمكتب: {0:N2} جنيه}"
+                                           FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SelectedSettlement.AmountPaid, StringFormat=المدفوع: {0:N2} جنيه}"
+                                           FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding SelectedSettlement.Remaining, StringFormat=المتبقي: {0:N2} جنيه}"
+                                           FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Column="3"
+                                           Text="{Binding SettlementDetails.Count, StringFormat=عدد الأوردرات: {0}}"
+                                           FontWeight="SemiBold"/>
+                            </Grid>
+
+                            <DataGrid ItemsSource="{Binding SettlementDetails}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      HeadersVisibility="Column"
+                                      MinHeight="220"
+                                      MaxHeight="430">
+
+                                <DataGrid.Columns>
+
+                                    <DataGridTextColumn Header="رقم الأوردر"
+                                                        Binding="{Binding OrderNumber}"
+                                                        Width="1.1*"/>
+
+                                    <DataGridTextColumn Header="التاريخ"
+                                                        Binding="{Binding Date, StringFormat=dd/MM/yyyy}"
+                                                        Width="1*"/>
+
+                                    <DataGridTextColumn Header="العميل"
+                                                        Binding="{Binding CustomerName}"
+                                                        Width="1.7*"/>
+
+                                    <DataGridTextColumn Header="قيمة الطلب"
+                                                        Binding="{Binding OrderValue, StringFormat={}{0:N2}}"
+                                                        Width="1.1*"/>
+
+                                    <DataGridTextColumn Header="التوصيل"
+                                                        Binding="{Binding DeliveryFee, StringFormat={}{0:N2}}"
+                                                        Width="1.1*"/>
+
+                                    <DataGridTextColumn Header="الإجمالي"
+                                                        Binding="{Binding TotalAmount, StringFormat={}{0:N2}}"
+                                                        Width="1.1*"/>
+
+                                    <DataGridTextColumn Header="التحصيل"
+                                                        Binding="{Binding CollectedAmount, StringFormat={}{0:N2}}"
+                                                        Width="1.1*"/>
+
+                                    <DataGridTextColumn Header="الحالة"
+                                                        Binding="{Binding Status}"
+                                                        Width="1.1*"/>
+
+                                </DataGrid.Columns>
+
+                            </DataGrid>
+
+                        </StackPanel>
+
+                    </Border>
+
+                    <TextBlock Text="{Binding Message}"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="0,12,0,0"/>
+
+                </StackPanel>
+
+            </ScrollViewer>
+
+        </DataTemplate>
+
+
         <DataTemplate DataType="{x:Type local:InfoPageVm}">
 
             <Grid Margin="34">
@@ -2203,6 +2680,15 @@
                             Visibility="{Binding IsAccountant, Converter={StaticResource BooleanToVisibilityConverter}}">
 
                         <TextBlock Text="التسويات المالية"/>
+
+                    </Button>
+
+                    <Button Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="سجل التسويات"
+                            Visibility="{Binding IsAccountant, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <TextBlock Text="سجل التسويات"/>
 
                     </Button>
 

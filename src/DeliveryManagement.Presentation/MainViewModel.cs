@@ -238,6 +238,7 @@ public partial class MainViewModel : ObservableObject
                 "المناديب" => true,
                 "العملاء" => true,
                 "التسويات المالية" => true,
+                "سجل التسويات" => true,
                 _ => false
             },
 
@@ -329,6 +330,11 @@ public partial class MainViewModel : ObservableObject
                         this,
                         _settlements,
                         _driverService);
+                    break;
+
+                case "سجل التسويات":
+                    CurrentPage = new SettlementHistoryPageVm(this);
+                    await ((SettlementHistoryPageVm)CurrentPage).LoadAsync();
                     break;
 
                 case "التقارير":
@@ -1408,6 +1414,8 @@ public partial class SettlementPageVm : ObservableObject
         _driverService = driverService;
     }
 
+
+
     partial void OnSelectedDriverChanged(
         DeliveryMan? value)
     {
@@ -1608,6 +1616,694 @@ public partial class SettlementPageVm : ObservableObject
             Message = ex.Message;
         }
     }
+}
+
+// =============================================================
+// Settlement History Page ViewModel
+// =============================================================
+
+public partial class SettlementHistoryPageVm : ObservableObject
+{
+    private readonly MainViewModel _parent;
+
+    [ObservableProperty]
+    private DateTime fromDate =
+        new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    [ObservableProperty]
+    private DateTime toDate = DateTime.Today;
+
+    [ObservableProperty]
+    private DeliveryMan? selectedDriver;
+
+    [ObservableProperty]
+    private string searchText = "";
+
+    [ObservableProperty]
+    private string message = "";
+
+    private SettlementHistoryRow? _selectedSettlement;
+
+    public SettlementHistoryRow? SelectedSettlement
+    {
+        get => _selectedSettlement;
+        set => SetProperty(ref _selectedSettlement, value);
+    }
+
+    private bool _hasSelectedSettlement;
+
+    public bool HasSelectedSettlement
+    {
+        get => _hasSelectedSettlement;
+        set => SetProperty(ref _hasSelectedSettlement, value);
+    }
+
+    public ObservableCollection<SettlementDetailRow> SettlementDetails { get; } = new();
+
+    [ObservableProperty]
+    private decimal totalOrdersValue;
+
+    [ObservableProperty]
+    private decimal totalDeliveryFees;
+
+    [ObservableProperty]
+    private decimal totalCollected;
+
+    [ObservableProperty]
+    private decimal totalCommission;
+
+    [ObservableProperty]
+    private decimal totalExpenses;
+
+    [ObservableProperty]
+    private decimal totalDue;
+
+    [ObservableProperty]
+    private decimal totalPaid;
+
+    [ObservableProperty]
+    private decimal totalRemaining;
+
+    public ObservableCollection<SettlementHistoryRow> Settlements { get; } = new();
+
+    public ObservableCollection<DeliveryMan> Drivers => _parent.Drivers;
+
+    public SettlementHistoryPageVm(MainViewModel parent)
+    {
+        _parent = parent;
+    }
+
+    [RelayCommand]
+    private async Task Load()
+    {
+        await LoadAsync();
+    }
+
+    public async Task LoadAsync()
+    {
+        try
+        {
+            // Make sure the driver list is ready before mapping settlements.
+            // This prevents the history table from initially showing "غير محدد".
+            if (_parent.Drivers.Count == 0)
+                await _parent.LoadDriversAsync();
+
+            if (FromDate.Date > ToDate.Date)
+            {
+                Message = "تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية.";
+                OnPropertyChanged(nameof(Message));
+                return;
+            }
+
+            var query = _parent
+                .GetDbContext()
+                .Settlements
+                .AsNoTracking()
+                .Where(x =>
+                    x.Date >= FromDate.Date &&
+                    x.Date < ToDate.Date.AddDays(1));
+
+            if (SelectedDriver is not null)
+            {
+                query = query.Where(x =>
+                    x.DeliveryManId == SelectedDriver.Id);
+            }
+
+            var data = await query
+                .OrderByDescending(x => x.Date)
+                .ToListAsync();
+
+            Settlements.Clear();
+
+            foreach (var settlement in data)
+            {
+                var driver = _parent.Drivers.FirstOrDefault(
+                    x => x.Id == settlement.DeliveryManId);
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var search = SearchText.Trim();
+
+                    if (driver is null ||
+                        !driver.Name.Contains(
+                            search,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                }
+
+                Settlements.Add(new SettlementHistoryRow
+                {
+                    Id = settlement.Id,
+                    Date = settlement.Date,
+                    DriverName = driver?.Name ?? "غير محدد",
+                    OrdersValue = settlement.OrdersValue,
+                    DeliveryFees = settlement.DeliveryFees,
+                    AmountCollected = settlement.AmountCollected,
+                    Commission = settlement.Commission,
+                    ApprovedExpenses = settlement.ApprovedExpenses,
+                    AmountDueToOffice = settlement.AmountDueToOffice,
+                    AmountPaid = settlement.AmountPaid,
+                    Remaining = settlement.Remaining,
+                    IsClosed = settlement.IsClosed,
+                    Notes = settlement.Notes
+                });
+            }
+
+            CalculateTotals();
+
+            Message = $"تم تحميل {Settlements.Count} تسوية.";
+            OnPropertyChanged(nameof(Message));
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            OnPropertyChanged(nameof(Message));
+            Log.Error(ex, "Load settlement history failed");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ViewDetails(SettlementHistoryRow? row)
+    {
+        try
+        {
+            if (row is null)
+                return;
+
+            var settlement = await _parent
+                .GetDbContext()
+                .Settlements
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == row.Id);
+
+            if (settlement is null)
+                throw new KeyNotFoundException("التسوية غير موجودة.");
+
+            SelectedSettlement = row;
+            SettlementDetails.Clear();
+
+            var details = await _parent
+                .GetDbContext()
+                .SettlementDetails
+                .AsNoTracking()
+                .Where(x => x.SettlementId == settlement.Id)
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+
+            var orderIds = details
+                .Select(x => x.OrderId)
+                .ToList();
+
+            var orders = await _parent
+                .GetDbContext()
+                .Orders
+                .AsNoTracking()
+                .Include(x => x.Customer)
+                .Where(x => orderIds.Contains(x.Id))
+                .ToListAsync();
+
+            foreach (var detail in details)
+            {
+                var order = orders.FirstOrDefault(x => x.Id == detail.OrderId);
+
+                SettlementDetails.Add(new SettlementDetailRow
+                {
+                    OrderId = detail.OrderId,
+                    OrderNumber = order?.OrderNumber ?? $"#{detail.OrderId}",
+                    Date = order?.CreatedAt ?? settlement.Date,
+                    CustomerName = order?.Customer?.Name ?? "غير محدد",
+                    OrderValue = order?.OrderValue ?? 0m,
+                    DeliveryFee = order?.DeliveryFee ?? 0m,
+                    TotalAmount = order?.TotalAmount ?? 0m,
+                    CollectedAmount = detail.CollectedAmount,
+                    Status = order is null ? "غير محدد" : GetOrderStatusText(order.Status)
+                });
+            }
+
+            HasSelectedSettlement = true;
+            Message = $"تم عرض تفاصيل التسوية رقم #{settlement.Id}.";
+            OnPropertyChanged(nameof(Message));
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            HasSelectedSettlement = false;
+            SettlementDetails.Clear();
+            OnPropertyChanged(nameof(Message));
+            Log.Error(ex, "Load settlement details failed");
+        }
+    }
+
+    [RelayCommand]
+    private void CloseDetails()
+    {
+        SelectedSettlement = null;
+        HasSelectedSettlement = false;
+        SettlementDetails.Clear();
+    }
+
+    [RelayCommand]
+    private void ExportDetailsExcel()
+    {
+        try
+        {
+            if (!HasSelectedSettlement || SelectedSettlement is null)
+                throw new InvalidOperationException("اختر تسوية واعرض تفاصيلها أولًا.");
+
+            var dialog = new SaveFileDialog
+            {
+                Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+                FileName = $"Settlement-{SelectedSettlement.Id}-{SelectedSettlement.Date:yyyy-MM-dd}.xlsx",
+                Title = "تصدير تفاصيل التسوية إلى Excel"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            using var workbook = new XLWorkbook();
+            var sheet = workbook.Worksheets.Add("تفاصيل التسوية");
+
+            sheet.RightToLeft = true;
+
+            sheet.Cell(1, 1).Value = "توصيله - تفاصيل التسوية";
+            sheet.Range(1, 1, 1, 8).Merge();
+            sheet.Cell(1, 1).Style.Font.Bold = true;
+            sheet.Cell(1, 1).Style.Font.FontSize = 18;
+            sheet.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            sheet.Cell(2, 1).Value = "رقم التسوية";
+            sheet.Cell(2, 2).Value = SelectedSettlement.Id;
+            sheet.Cell(2, 3).Value = "التاريخ";
+            sheet.Cell(2, 4).Value = SelectedSettlement.Date;
+            sheet.Cell(2, 5).Value = "المندوب";
+            sheet.Cell(2, 6).Value = SelectedSettlement.DriverName;
+            sheet.Cell(2, 7).Value = "الحالة";
+            sheet.Cell(2, 8).Value = SelectedSettlement.IsClosed ? "مغلقة" : "مفتوحة";
+
+            sheet.Cell(3, 1).Value = "قيمة الطلبات";
+            sheet.Cell(3, 2).Value = SelectedSettlement.OrdersValue;
+            sheet.Cell(3, 3).Value = "التوصيل";
+            sheet.Cell(3, 4).Value = SelectedSettlement.DeliveryFees;
+            sheet.Cell(3, 5).Value = "التحصيل";
+            sheet.Cell(3, 6).Value = SelectedSettlement.AmountCollected;
+            sheet.Cell(3, 7).Value = "العمولة";
+            sheet.Cell(3, 8).Value = SelectedSettlement.Commission;
+
+            sheet.Cell(4, 1).Value = "المصروفات المعتمدة";
+            sheet.Cell(4, 2).Value = SelectedSettlement.ApprovedExpenses;
+            sheet.Cell(4, 3).Value = "المستحق للمكتب";
+            sheet.Cell(4, 4).Value = SelectedSettlement.AmountDueToOffice;
+            sheet.Cell(4, 5).Value = "المدفوع";
+            sheet.Cell(4, 6).Value = SelectedSettlement.AmountPaid;
+            sheet.Cell(4, 7).Value = "المتبقي";
+            sheet.Cell(4, 8).Value = SelectedSettlement.Remaining;
+
+            if (!string.IsNullOrWhiteSpace(SelectedSettlement.Notes))
+            {
+                sheet.Cell(5, 1).Value = "ملاحظات";
+                sheet.Cell(5, 2).Value = SelectedSettlement.Notes;
+                sheet.Range(5, 2, 5, 8).Merge();
+            }
+
+            var headerRow = 7;
+            var headers = new[]
+            {
+                "رقم الأوردر",
+                "التاريخ",
+                "العميل",
+                "قيمة الطلب",
+                "رسوم التوصيل",
+                "إجمالي الأوردر",
+                "التحصيل",
+                "الحالة"
+            };
+
+            for (var i = 0; i < headers.Length; i++)
+                sheet.Cell(headerRow, i + 1).Value = headers[i];
+
+            var headerRange = sheet.Range(headerRow, 1, headerRow, headers.Length);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+            var rowNumber = headerRow + 1;
+            foreach (var detail in SettlementDetails)
+            {
+                sheet.Cell(rowNumber, 1).Value = detail.OrderNumber;
+                sheet.Cell(rowNumber, 2).Value = detail.Date;
+                sheet.Cell(rowNumber, 3).Value = detail.CustomerName;
+                sheet.Cell(rowNumber, 4).Value = detail.OrderValue;
+                sheet.Cell(rowNumber, 5).Value = detail.DeliveryFee;
+                sheet.Cell(rowNumber, 6).Value = detail.TotalAmount;
+                sheet.Cell(rowNumber, 7).Value = detail.CollectedAmount;
+                sheet.Cell(rowNumber, 8).Value = detail.Status;
+                rowNumber++;
+            }
+
+            if (rowNumber > headerRow + 1)
+            {
+                var dataRange = sheet.Range(headerRow + 1, 1, rowNumber - 1, headers.Length);
+                dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            }
+
+            sheet.Range(2, 1, 4, 8).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            sheet.Range(2, 1, 4, 8).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            sheet.Range(2, 1, 4, 8).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            sheet.Range(3, 2, 4, 8).Style.NumberFormat.Format = "#,##0.00";
+            sheet.Range(headerRow + 1, 4, Math.Max(headerRow + 1, rowNumber - 1), 7)
+                .Style.NumberFormat.Format = "#,##0.00";
+
+            sheet.Column(1).Width = 18;
+            sheet.Column(2).Width = 14;
+            sheet.Column(3).Width = 28;
+            sheet.Column(4).Width = 16;
+            sheet.Column(5).Width = 16;
+            sheet.Column(6).Width = 17;
+            sheet.Column(7).Width = 16;
+            sheet.Column(8).Width = 18;
+
+            workbook.SaveAs(dialog.FileName);
+
+            Message = $"تم تصدير تفاصيل التسوية رقم #{SelectedSettlement.Id} إلى Excel بنجاح.";
+            OnPropertyChanged(nameof(Message));
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            OnPropertyChanged(nameof(Message));
+            Log.Error(ex, "Export settlement details to Excel failed");
+        }
+    }
+
+    [RelayCommand]
+    private void PrintDetails()
+    {
+        try
+        {
+            if (!HasSelectedSettlement || SelectedSettlement is null)
+                throw new InvalidOperationException("اختر تسوية واعرض تفاصيلها أولًا.");
+
+            var tempFile = Path.Combine(
+                Path.GetTempPath(),
+                $"Tawseela-Settlement-{SelectedSettlement.Id}-{Guid.NewGuid():N}.pdf");
+
+            GenerateSettlementDetailsPdf(tempFile);
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = tempFile,
+                UseShellExecute = true
+            });
+
+            Message = "تم فتح تقرير التسوية للطباعة. استخدم Ctrl+P من عارض الـPDF.";
+            OnPropertyChanged(nameof(Message));
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            OnPropertyChanged(nameof(Message));
+            Log.Error(ex, "Print settlement details failed");
+        }
+    }
+
+    private void GenerateSettlementDetailsPdf(string filePath)
+    {
+        if (SelectedSettlement is null)
+            throw new InvalidOperationException("لا توجد تسوية محددة.");
+
+        QuestPDF.Settings.License = LicenseType.Community;
+        QuestPDF.Settings.UseSystemFonts = true;
+
+        Document.Create(document =>
+        {
+            document.Page(page =>
+            {
+                page.Size(PageSizes.A4.Landscape());
+                page.Margin(25);
+                page.ContentFromRightToLeft();
+
+                page.DefaultTextStyle(style =>
+                    style
+                        .FontFamily("Segoe UI", "Arial", "Tahoma")
+                        .FontSize(9));
+
+                page.Header().Column(header =>
+                {
+                    header.Item()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span("توصيله - تفاصيل التسوية")
+                                .FontSize(20)
+                                .Bold();
+                        });
+
+                    header.Item()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span(
+                                $"التسوية رقم #{SelectedSettlement.Id} | {SelectedSettlement.Date:yyyy-MM-dd} | المندوب: {SelectedSettlement.DriverName}")
+                                .FontSize(11);
+                        });
+                });
+
+                page.Content()
+                    .PaddingVertical(12)
+                    .Column(column =>
+                    {
+                        column.Spacing(8);
+
+                        column.Item().Row(row =>
+                        {
+                            AddKpi(row, "قيمة الطلبات", $"{SelectedSettlement.OrdersValue:N2} جنيه");
+                            AddKpi(row, "التوصيل", $"{SelectedSettlement.DeliveryFees:N2} جنيه");
+                            AddKpi(row, "التحصيل", $"{SelectedSettlement.AmountCollected:N2} جنيه");
+                            AddKpi(row, "العمولة", $"{SelectedSettlement.Commission:N2} جنيه");
+                        });
+
+                        column.Item().Row(row =>
+                        {
+                            AddKpi(row, "المصروفات", $"{SelectedSettlement.ApprovedExpenses:N2} جنيه");
+                            AddKpi(row, "المستحق للمكتب", $"{SelectedSettlement.AmountDueToOffice:N2} جنيه");
+                            AddKpi(row, "المدفوع", $"{SelectedSettlement.AmountPaid:N2} جنيه");
+                            AddKpi(row, "المتبقي", $"{SelectedSettlement.Remaining:N2} جنيه");
+                        });
+
+                        if (!string.IsNullOrWhiteSpace(SelectedSettlement.Notes))
+                        {
+                            column.Item()
+                                .PaddingTop(3)
+                                .Text(text =>
+                                {
+                                    text.Span("ملاحظات: ").Bold();
+                                    text.Span(SelectedSettlement.Notes);
+                                });
+                        }
+
+                        column.Item()
+                            .PaddingTop(5)
+                            .Text(text =>
+                            {
+                                text.Span($"تفاصيل الطلبات ({SettlementDetails.Count})")
+                                    .FontSize(13)
+                                    .Bold();
+                            });
+
+                        if (SettlementDetails.Count == 0)
+                        {
+                            column.Item()
+                                .AlignCenter()
+                                .PaddingTop(10)
+                                .Text("لا توجد تفاصيل طلبات مرتبطة بهذه التسوية.");
+                        }
+                        else
+                        {
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.1f);
+                                    columns.RelativeColumn(2.2f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.1f);
+                                });
+
+                                var headers = new[]
+                                {
+                                    "الأوردر",
+                                    "التاريخ",
+                                    "العميل",
+                                    "قيمة الطلب",
+                                    "التوصيل",
+                                    "الإجمالي",
+                                    "التحصيل",
+                                    "الحالة"
+                                };
+
+                                table.Header(header =>
+                                {
+                                    foreach (var headerText in headers)
+                                    {
+                                        header.Cell()
+                                            .Background(Colors.Grey.Lighten2)
+                                            .Border(1)
+                                            .Padding(4)
+                                            .AlignCenter()
+                                            .Text(text =>
+                                            {
+                                                text.Span(headerText).Bold();
+                                            });
+                                    }
+                                });
+
+                                foreach (var detail in SettlementDetails)
+                                {
+                                    AddPdfCell(table, detail.OrderNumber);
+                                    AddPdfCell(table, detail.Date.ToString("dd/MM/yyyy"));
+                                    AddPdfCell(table, detail.CustomerName);
+                                    AddPdfCell(table, detail.OrderValue.ToString("N2"));
+                                    AddPdfCell(table, detail.DeliveryFee.ToString("N2"));
+                                    AddPdfCell(table, detail.TotalAmount.ToString("N2"));
+                                    AddPdfCell(table, detail.CollectedAmount.ToString("N2"));
+                                    AddPdfCell(table, detail.Status);
+                                }
+                            });
+                        }
+                    });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span("توصيله - صفحة ");
+                        text.CurrentPageNumber();
+                        text.Span(" من ");
+                        text.TotalPages();
+                    });
+            });
+        }).GeneratePdf(filePath);
+    }
+
+    private static string GetOrderStatusText(OrderStatus status) =>
+        status switch
+        {
+            OrderStatus.New => "جديد",
+            OrderStatus.Assigned => "مع المندوب",
+            OrderStatus.OutForDelivery => "في الطريق",
+            OrderStatus.Delivered => "تم التسليم",
+            OrderStatus.Failed => "لم يتم التسليم",
+            OrderStatus.Returned => "مرتجع",
+            OrderStatus.Cancelled => "ملغي",
+            _ => status.ToString()
+        };
+
+    private void CalculateTotals()
+    {
+        TotalOrdersValue = Settlements.Sum(x => x.OrdersValue);
+        TotalDeliveryFees = Settlements.Sum(x => x.DeliveryFees);
+        TotalCollected = Settlements.Sum(x => x.AmountCollected);
+        TotalCommission = Settlements.Sum(x => x.Commission);
+        TotalExpenses = Settlements.Sum(x => x.ApprovedExpenses);
+        TotalDue = Settlements.Sum(x => x.AmountDueToOffice);
+        TotalPaid = Settlements.Sum(x => x.AmountPaid);
+        TotalRemaining = Settlements.Sum(x => x.Remaining);
+    }
+
+    private static void AddKpi(
+        QuestPDF.Fluent.RowDescriptor row,
+        string title,
+        string value)
+    {
+        row.RelativeItem()
+            .Border(1)
+            .Padding(8)
+            .Column(column =>
+            {
+                column.Item()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span(title)
+                            .FontSize(9);
+                    });
+
+                column.Item()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.Span(value)
+                            .FontSize(14)
+                            .Bold();
+                    });
+            });
+    }
+
+    private static void AddPdfCell(
+        QuestPDF.Fluent.TableDescriptor table,
+        string value)
+    {
+        table.Cell()
+            .Border(1)
+            .Padding(5)
+            .AlignCenter()
+            .Text(value);
+    }
+
+    [RelayCommand]
+    private async Task Reset()
+    {
+        FromDate = new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1);
+
+        ToDate = DateTime.Today;
+        SelectedDriver = null;
+        SearchText = "";
+
+        await LoadAsync();
+    }
+}
+
+public sealed class SettlementHistoryRow
+{
+    public int Id { get; set; }
+    public DateTime Date { get; set; }
+    public string DriverName { get; set; } = "";
+    public decimal OrdersValue { get; set; }
+    public decimal DeliveryFees { get; set; }
+    public decimal AmountCollected { get; set; }
+    public decimal Commission { get; set; }
+    public decimal ApprovedExpenses { get; set; }
+    public decimal AmountDueToOffice { get; set; }
+    public decimal AmountPaid { get; set; }
+    public decimal Remaining { get; set; }
+    public bool IsClosed { get; set; }
+    public string Notes { get; set; } = "";
+}
+
+public sealed class SettlementDetailRow
+{
+    public int OrderId { get; set; }
+    public string OrderNumber { get; set; } = "";
+    public DateTime Date { get; set; }
+    public string CustomerName { get; set; } = "";
+    public decimal OrderValue { get; set; }
+    public decimal DeliveryFee { get; set; }
+    public decimal TotalAmount { get; set; }
+    public decimal CollectedAmount { get; set; }
+    public string Status { get; set; } = "";
 }
 
 // =============================================================
